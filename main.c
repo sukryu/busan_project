@@ -100,16 +100,32 @@ void print_tab() {
   }
 }
 
-int move_madong(int zombie_position, int madong_position) {
-  int madong_actions = 0;
+int move_madong(int zombie_position, int madong_position, int madong_aggro) {
+  int madong_move = 0;
   if (madong_position == zombie_position - 1) {
     printf("(0:stay)>> ");
-    scanf("%d", &madong_actions);
-    if (madong_actions != 0) {
+    scanf("%d", &madong_move);
+    if (madong_move != 0) {
       printf("invalid input\n");
       return 0;
     }
   }
+  else {
+    printf("(0:stay 1:left)>> ");
+    scanf("%d", &madong_move);
+    if (madong_move == 0) {
+      if (madong_aggro >= AGGRO_MIN || madong_aggro <= AGGRO_MAX) {
+        madong_aggro--;
+      }
+    }
+    else if (madong_move == 1) {
+      if (madong_aggro >= AGGRO_MIN || madong_aggro <= AGGRO_MAX) {
+        madong_aggro++;
+        madong_position--;
+      }
+    }
+  }
+  return madong_position, madong_aggro;
 }
 
 int main() {
@@ -153,6 +169,9 @@ int main() {
     }
 
     // 좀비 이동.
+
+    // 마동석 이동.
+    madongseok, madong_aggro = move_madong(zombie, madongseok, madong_aggro);
   }
   return 0;
 }
