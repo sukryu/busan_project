@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 
 // 열차 길이.
@@ -136,6 +137,8 @@ int main() {
   int madong_aggro = 0;
   int count = 0;
   int madong_action = 0;
+  int madong_move = 0;
+  bool isActive_zombie = true;
   
   int train_length = 0;
   int madongseok_stamina = 0;
@@ -169,9 +172,26 @@ int main() {
     }
 
     // 좀비 이동.
-
+    if (count % 2 != 0) {
+      random_change = rand() % 100 + 1;
+      if (random_change <= percentile_probability || zombie > 1 || zombie != citizen + 1 && isActive_zombie != false) {
+        zombie--;
+      }
+    }
+    
     // 마동석 이동.
-    madongseok, madong_aggro = move_madong(zombie, madongseok, madong_aggro);
+    while (1) {
+      if (zombie + 1 != madongseok) {
+        printf("(0:stay, 1:left)>> ");
+        scanf("%d", &madong_move);
+        if (madong_move == 0) {
+          madong_aggro--;
+        } else if (madong_move == 1) {
+          madong_aggro++;
+          madongseok--;
+        }
+      }
+    }
   }
   return 0;
 }
