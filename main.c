@@ -1,267 +1,372 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <time.h>
-#include <string.h>
 #include <unistd.h>
 
-// 열차 길이.
 #define LEN_MIN 15
 #define LEN_MAX 50
-
-// 마동석 체력
 #define STM_MIN 0
 #define STM_MAX 5
-
-// 확률
 #define PROB_MIN 10
 #define PROB_MAX 90
-
-// 어그로 범위
 #define AGGRO_MIN 0
 #define AGGRO_MAX 5
 
-// 마동석 이동 방향
 #define MOVE_LEFT 1
 #define MOVE_STAY 0
 
-// 좀비의 공격 대상
 #define ATK_NONE 0
 #define ATK_CITIZEN 1
 #define ATK_DONGSEOK 2
 
-// 마동석 행동
-#define ACTION_REST 0 // 휴식
-#define ACTION_PROVOKE 1 // 도발
+#define ACTION_REST 0
+#define ACTION_PROVOKE 1
 #define ACTION_PULL 2
 
-int get_TrainLength() {
-  int result = 0;
-  while(1) {
-    printf("train length(%d ~ %d)>> ", LEN_MIN, LEN_MAX);
-    scanf("%d", &result);
-    if (result >= LEN_MIN && result <= LEN_MAX) {
-      break;
-    }
+int train[LEN_MAX];
+int citizenPos[LEN_MAX/2];
+int citizenAggro[LEN_MAX/2];
+int numCitizen;
+int zombiePos;
+int zombieAggro;
+int villainPos;
+int villainAggro;
+int madongseokPos;
+int madongseokAggro;
+int madongseokStamina;
+int p;
+
+int prevCitizenPos[LEN_MAX/2];
+int prevZombiePos;
+int prevMadongseokPos;
+
+void savePrevPositions() {
+  for (int i = 0; i < numCitizen; i++) {
+    prevCitizenPos[i] = citizenPos[i];
   }
-  return result;
+  prevZombiePos = zombiePos;
+  prevMadongseokPos = madongseokPos;
 }
 
-int get_MaSTM() {
-  int result = 0;
-  while (1) {
-    printf("madonseok stamina(%d ~ %d)>> ", STM_MIN, STM_MAX);
-    scanf("%d", &result);
-    if (result >= STM_MIN && result <= STM_MAX) {
-      break;
-    }
+void printMovement(int prevPos, int currentPos, int aggro, char* name) {
+  printf("%s: ", name);
+  if (prevPos != currentPos) {
+    printf("%d -> %d (aggro: %d)\n", prevPos, currentPos, aggro);
+  } else {
+    printf("stay %d (aggro: %d)\n", currentPos, aggro);
   }
-  return result;
 }
 
-int get_PercentileProbability() {
-  int result = 0;
-  while (1) {
-    printf("percentile probability(%d ~ %d)>> ", PROB_MIN, PROB_MAX);
-    scanf("%d", &result);
-    if (result >= PROB_MIN && result <= PROB_MAX) {
-      break;
-    }
+void initGame(int len, int stamina) {
+  numCitizen = len / 4 + rand() % (len / 4);
+
+  for (int i = 0; i < len; i++) train[i] = 0;
+
+  citizenPos[0] = len - 1;
+  citizenAggro[0] = 1;
+  train[len-1] = 1;
+
+  for (int i = 1; i < numCitizen; i++) {
+    int pos = rand() % (len - 5) + 1;
+    while (train[pos] != 0) pos = rand() % (len - 5) + 1;
+    citizenPos[i] = pos;
+    citizenAggro[i] = 1;
+    train[pos] = 1;
   }
-  return result;
+
+  zombiePos = len - 4; zombieAggro = 1; train[zombiePos] = 2;
+  villainPos = len - 5; villainAggro = 1; train[villainPos] = 3;
+  madongseokPos = len - 2; madongseokAggro = 1; madongseokStamina = stamina; train[madongseokPos] = 4;
 }
 
-void print_train2(int length) {
-  for (int i = 0; i < length; i++) {
-    if (i == length - 1) printf("#\n");
-    else printf("#");
-  }
-}
-void print_train(int length, int C_po, int Z_po, int M_po) {
-  print_train2(length);
-  for (int i = 0; i < length; i++) {
-    if (i == 0) printf("#");
-    else if (i == length - 1) {
-      printf("#\n");
-    }
-    else if (i == C_po) printf("C");
-    else if (i == Z_po) printf("Z");
-    else if (i == M_po) printf("M");
-    else printf(" ");
-  }
-  print_train2(length);
-}
-
-void print_Tab() {
-  for (int i = 0; i < 2; i++) {
+void printTrain(int len) {
+    printf("###");
+    for (int i = 0; i < len; i++) printf("#");
     printf("\n");
-  }
-}
-
-int move_Citizen(int rc, int pb, int cp) {
-  if (rc <= pb && cp > 1) {
-    cp--;
-  }
-  return cp;
-}
-
-int checkIsMoved(int before_Cp, int current_Cp) {
-  if (current_Cp == (before_Cp - 1)) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-bool checkIsValidRangeOfAggro(int before_Aggro, int current_Aggro) {
-  if (
-    before_Aggro >= AGGRO_MIN && before_Aggro < AGGRO_MAX &&
-    current_Aggro >= AGGRO_MIN && before_Aggro < AGGRO_MAX) {
-      return true; 
+    
+    printf("# ");
+    for (int i = 0; i < len; i++) {
+        if (train[i] == 0) printf(" ");
+        else if (train[i] == 1) printf("C");
+        else if (train[i] == 2) printf("Z");
+        else if (train[i] == 3) printf("V");
+        else if (train[i] == 4) printf("M");
     }
-  return false;
+    printf("#\n");
+    
+    printf("###");
+    for (int i = 0; i < len; i++) printf("#");
+    printf("\n");
 }
 
-int move_Zombie(int turn, int rc, int pb, int zp, int ma_ActionType, int cp_a, int m_a) {
-  if (turn % 2 == 1) {
-    if (rc <= pb && zp > 1) {
-      if (ma_ActionType != ACTION_PULL) {
-        if (cp_a >= m_a) zp--;
-        else zp++;
-      }
+void printStatus(int len) {
+  for (int i = 0; i < numCitizen; i++) {
+    if (citizenPos[i] >= 0) {
+      printMovement(prevCitizenPos[i], citizenPos[i], citizenAggro[i], "citizen");
     }
   }
-  return zp;
+  if (zombiePos >= 0) {
+    printMovement(prevZombiePos, zombiePos, zombieAggro, "zombie");
+  }
+  printf("madongseok: stay %d(aggro: %d, stamina: %d)\n", madongseokPos, madongseokAggro, madongseokStamina);
+  printf("\n");
 }
 
-void trace_log(
-  int before_cp, 
-  int current_cp,
-  int before_cp_aggro, 
-  int current_cp_aggro,
-  int before_zp,
-  int current_zp) {
-    printf("citizen: %d -> %d (aggro: %d -> %d)\n", before_cp, current_cp, before_cp_aggro ,current_cp_aggro);
-    if (before_zp == current_zp) {
-      printf("zombie: stay %d\n", current_zp);
+void moveCitizen() {
+  for (int i = 0; i < numCitizen; i++) {
+    int move = rand() % 100 < 100 - p;
+    if (move && citizenPos[i] > 0) {
+      train[citizenPos[i]] = 0;
+      citizenPos[i]--;
+      train[citizenPos[i]] = 1;
+      citizenAggro[i] = (citizenAggro[i] + 1 <= AGGRO_MAX) ? citizenAggro[i] + 1 : AGGRO_MAX;
     } else {
-      printf("zombie: %d -> %d\n", before_zp, current_zp);
+      citizenAggro[i] = (citizenAggro[i] - 1 >= AGGRO_MIN) ? citizenAggro[i] - 1 : AGGRO_MIN;
     }
+  }
+  savePrevPositions();
 }
 
-int move_Madongseok(int actionType, int zp, int mp) {
-  while (1) {
-      if (zp == (mp - 1)) {
-      printf("madonseok move(%d:stay)>> ", ACTION_REST);
-      scanf("%d", &actionType);
-      if (actionType == ACTION_REST) {
-        break;
-      }
-    } else {
-      printf("madonseok move(%d:stay, %d:left)>> ", ACTION_REST, ACTION_PROVOKE);
-      scanf("%d", &actionType);
-      if (actionType == ACTION_REST) break;
-      else if (actionType == ACTION_PROVOKE) {
-        mp--;
-        break;
+void moveZombie(int len) {
+  if (zombiePos >= 0) {
+    int move = rand() % 2;
+    if (move) {
+      int newPos = zombiePos;
+      if (madongseokAggro >= citizenAggro[0]) newPos++;
+      else newPos--;
+
+      if (newPos > 0 && newPos < len - 1 && newPos < madongseokPos && train[newPos] != 1 && train[newPos] != 3) {
+        train[zombiePos] = 0;
+        zombiePos = newPos;
+        train[zombiePos] = 2;
       }
     }
   }
-  return mp;
+  savePrevPositions();
 }
 
-void checkMadongseokIsMovedAndPrintTraceLog(
-  int before_mp, 
-  int current_mp,
-  int mp_aggro,
-  int mp_stamina
-  ) {
-  if (current_mp == (before_mp - 1)) {
-    printf("madonseok: stay %d(aggro: %d, stamina: %d)\n", current_mp, mp_aggro, mp_stamina);
+void moveVillain() {
+  int move = citizenPos[0] - villainPos > 0;
+  if (move) {
+    train[villainPos] = 0;
+    villainPos++;
+    train[villainPos] = 3;
+    villainAggro = (villainAggro + 1 <= AGGRO_MAX) ? villainAggro + 1 : AGGRO_MAX;
   } else {
-    printf("madonseok rests...\n");
+    villainAggro = (villainAggro - 1 >= AGGRO_MIN) ? villainAggro - 1 : AGGRO_MIN;
   }
+  savePrevPositions();
+}
+
+void moveMadongseok(int direction) {
+  if (direction == MOVE_LEFT && madongseokPos > zombiePos + 1 && madongseokPos > 1) {
+    train[madongseokPos] = 0;
+    madongseokPos--;
+    train[madongseokPos] = 4;
+    madongseokAggro = (madongseokAggro + 1 <= AGGRO_MAX) ? madongseokAggro + 1 : AGGRO_MAX;
+  } else {
+    madongseokAggro = (madongseokAggro - 1 >= AGGRO_MIN) ? madongseokAggro - 1 : AGGRO_MIN;
+  }
+  savePrevPositions();
+}
+
+void citizenAction() {
+    for (int i = 0; i < numCitizen; i++) {
+        if (citizenPos[i] == 0) {
+            train[citizenPos[i]] = 0;
+            printf("citizen%d has escaped.\n", i);
+            for (int j = i; j < numCitizen - 1; j++) {
+                citizenPos[j] = citizenPos[j+1];
+                citizenAggro[j] = citizenAggro[j+1];
+            }
+            numCitizen--;
+            i--;
+        }
+    }
+}
+
+void villainAction() {
+  if (villainPos == citizenPos[0] - 1 || villainPos == citizenPos[0] + 1) {
+    if (rand() % 100 < 30) {
+      int temp = citizenPos[0];
+      citizenPos[0] = villainPos;
+      villainPos = temp;
+      temp = citizenAggro[0];
+      citizenAggro[0] = villainAggro;
+      villainAggro = temp;
+      train[citizenPos[0]] = 1;
+      train[villainPos] = 3;
+    }
+  }
+}
+
+void zombieAction() {
+  int maxAggro = citizenAggro[0];
+  int target = 0;
+  for (int i = 1; i < numCitizen; i++) {
+    if (citizenAggro[i] > maxAggro) {
+      maxAggro = citizenAggro[i];
+      target = i;
+    }
+  }
+  if (villainAggro > maxAggro) {
+    maxAggro = villainAggro;
+    target = -1;
+  }
+  if (madongseokAggro > maxAggro) {
+    maxAggro = madongseokAggro;
+    target = -2;
+  }
+
+  if (zombiePos >= 0) {
+    if (target >= 0 && (zombiePos == citizenPos[target] - 1 || zombiePos == citizenPos[target] + 1)) {
+      printf("citizen%d has been attacked by zombie.\n", target);
+      printf("%d citizen(s) alive.\n\n", numCitizen - 1);      
+      train[citizenPos[target]] = 2;
+      printf("citizen%d turned into a zombie!\n", target);
+      printf("%d citizen(s) alive.\n\n", numCitizen - 1);      
+      for (int j = target; j < numCitizen - 1; j++) {
+        citizenPos[j] = citizenPos[j+1];
+        citizenAggro[j] = citizenAggro[j+1];
+      }
+      numCitizen--;
+    } else if (target == -1 && (zombiePos == villainPos - 1 || zombiePos == villainPos + 1)) {
+        train[villainPos] = 2;
+        villainPos = -1;
+    } else if (target == -2 && (zombiePos == madongseokPos - 1 || zombiePos == madongseokPos + 1)) {
+        madongseokStamina--;
+    }
+  }
+}
+
+void madonseokAction(int action) {
+  if (action == ACTION_REST) {
+    madongseokStamina = (madongseokStamina + 1 <= STM_MAX) ? madongseokStamina + 1 : STM_MAX;
+    madongseokAggro = (madongseokAggro - 1 >= AGGRO_MIN) ? madongseokAggro - 1 : AGGRO_MIN;
+  } else if (action == ACTION_PROVOKE) {
+    madongseokAggro = AGGRO_MAX;
+  } else if (action == ACTION_PULL && zombiePos == madongseokPos - 1) {
+    madongseokAggro = (madongseokAggro + 2 <= AGGRO_MAX) ? madongseokAggro + 2 : AGGRO_MAX;
+    madongseokStamina = (madongseokStamina - 1 >= STM_MIN) ? madongseokStamina - 1 : STM_MIN;
+    if (rand() % 100 < 100 - p) zombiePos = -1;
+  }
+}
+
+void printTab() {
+  printf("\n\n");
 }
 
 int main() {
+  int len, stamina;
   srand((unsigned int)time(NULL));
-  /*
-  1. 열차 길이 입력받음. O
-  2. 마동석 체력 입력 받음. O
-  3. 확률 입력 받음. O
-  4. 열차 상태 출력. O
-  5. 시민, 좀비 순서대로 움직인 후 열차 출력. O
-  6. 시민, 좀비 추적 로그 출력. O
-  7. 마동석 이동 커맨드 입력(0, 1) O
-  8. 7번을 토대로 다시 열차 출력. O
-  9. 시민이 무엇을 했는지 출력 O
-  10. 좀비가 무엇을 했는지 출력
-  11. 마동석이 어떤 행동을 할 지 입력받음 (0, 1, 2)
-
-  시뮬레이션이 끝날 때까지 무한 반복.
-  */
-  int train_length = 0;
-  int ma_stm = 0;
-  int pecentile_probability = 0;
-
-  train_length = get_TrainLength();
-  ma_stm = get_MaSTM();
-  pecentile_probability = get_PercentileProbability();
-
-  print_Tab();
-
-  int citizen_position = train_length - 6;
-  int zombie_potision = train_length - 3;
-  int madonseok_position = train_length - 2;
-
-  int citizen_Aggro = 0;
-  int madonseok_Aggro = 0;
-  int turn = 0;
-  // 초기 열차 상태 출력.
-  print_train(train_length, citizen_position, zombie_potision, madonseok_position);
-  print_Tab();
 
   while (1) {
-    turn++;
-    // 확률 변수.
-    int random_choice = 0;
-    // 각 캐릭터의 이전 위치.
-    int before_Citizen_Position = citizen_position;
-    int before_Zombie_Position = zombie_potision;
-    int before_Madonseok_Position = madonseok_position;
-
-    // 시민과 마동석의 어그로 값.
-    int before_Citizen_Aggro = citizen_Aggro;
-    int before_Madonseok_Aggro = madonseok_Aggro;
-
-    // 마동석 행동
-    int MadongSeok_ActionType = 0;
-    // 시민 움직임.
-    random_choice = rand() % 100 + 1;
-    citizen_position = move_Citizen(random_choice, pecentile_probability, citizen_position);
-    if (checkIsMoved(before_Citizen_Position, citizen_position)) {
-      if (checkIsValidRangeOfAggro(before_Citizen_Aggro, citizen_Aggro)) {
-        citizen_Aggro++;
-      }
-    } else {
-      citizen_Aggro--;
-    }
-
-    // 좀비 움직임.
-    random_choice = rand() % 100 + 1;
-    zombie_potision = move_Zombie(turn, random_choice, pecentile_probability, zombie_potision, MadongSeok_ActionType, citizen_Aggro, madonseok_Aggro);
-
-    print_train(train_length, citizen_position, zombie_potision, madonseok_position);
-    print_Tab();
-    trace_log(before_Citizen_Position, citizen_position, before_Citizen_Aggro, citizen_Aggro, before_Zombie_Position, zombie_potision);
-    print_Tab();
-
-    madonseok_position = move_Madongseok(MadongSeok_ActionType, zombie_potision, madonseok_position);
-    print_train(train_length, citizen_position, zombie_potision, madonseok_position);
-    print_Tab();
-
-    checkMadongseokIsMovedAndPrintTraceLog(before_Madonseok_Position, madonseok_position, madonseok_Aggro, ma_stm);
-    sleep(1);
+    printf("train length(%d ~ %d)>> ", LEN_MIN, LEN_MAX);
+    scanf("%d", &len);
+    if (len >= LEN_MIN && len <= LEN_MAX) break;
   }
+
+  while (1) {
+    printf("madonseok stamina(%d ~ %d)>> ", STM_MIN, STM_MAX);
+    scanf("%d", &stamina);
+    if (stamina >= STM_MIN && stamina <= STM_MAX) break;
+  }
+
+  while (1) {
+    printf("percentile probability 'p'(%d ~ %d)>> ", PROB_MIN, PROB_MAX);
+    scanf("%d", &p);
+    if (p >= PROB_MIN && p <= PROB_MAX) break;
+  }
+
+  printTab();
+  initGame(len, stamina);
+  printTrain(len);
+  savePrevPositions();
+  printTab();
+
+  for (int stage = 1; stage <= 3; stage++) {
+    printf("Stage %d start!\n", stage);
+
+    while (1) {
+      moveCitizen();
+      if (stage >= 2) moveVillain();
+      moveZombie(len);
+
+      printTrain(len);
+      printTab();
+      printStatus(len);
+      printTab();
+
+      int dongseokMove;
+      while (1) {
+        printf("madonseok move(0:stay, 1:left)>> ");
+        scanf("%d", &dongseokMove);
+        if (dongseokMove == MOVE_STAY || dongseokMove == MOVE_LEFT) break;
+      }
+      moveMadonseok(dongseokMove);
+      printTrain(len);
+
+      citizenAction();
+      if (stage >= 2) {
+        villainAction();
+        printf("villain ");
+        if (train[villainPos] == 1) {
+          printf("swapped position with citizen.\n");
+        } else {
+          printf("did nothing.\n");
+        }
+      } else {
+        printf("citizen does nothing.\n");
+      }
+
+      int citizenAttacked = 0;
+      for (int i = 0; i < numCitizen; i++) {
+        if (train[citizenPos[i]] == 2) {
+          citizenAttacked = 1;
+           break;
+        }
+      }
+
+      if (citizenAttacked) {
+        printf("zombie attacked citizen.\n");
+      } else if (train[madongseokPos] == 2) {
+         printf("zombie attacked madonseok.\n");
+      } else {
+        printf("zombie attacked nobody.\n");
+      }
+
+      printTab();
+            
+      int dongseokAction;
+      while (1) {
+        printf("madonseok action(0.rest, 1.provoke, 2.pull)>> ");
+        scanf("%d", &dongseokAction);
+        if (dongseokAction == ACTION_REST || dongseokAction == ACTION_PROVOKE || dongseokAction == ACTION_PULL) break;
+      }
+      printTab();
+      madonseokAction(dongseokAction);
+      printStatus(len);
+
+      if (numCitizen == 0) {
+        printf("GAME OVER! All citizens are dead.\n");
+        return 0;
+      }
+
+      int allEscaped = 1;
+      for (int i = 0; i < numCitizen; i++) {
+        if (citizenPos[i] != 0) {
+           allEscaped = 0;
+           break;
+        }
+      }
+      if (allEscaped) break;
+
+      if (madongseokStamina <= 0) {
+        printf("GAME OVER! Madonseok is exhausted.\n");
+        return 0;
+      }
+    }
+  }
+  printf("YOU WIN! All citizens escaped safely.\n");
   return 0;
 }
