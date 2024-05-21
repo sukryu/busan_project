@@ -121,11 +121,3 @@
 9. 마동석 이동 입력
    만약 좀비가 바로 앞에 있다면 stay만 그렇지 않다면 stay, left를 입력받음.
    stay -> 어그로 -1 left -> 어그로 +1
-
-
-
-
-
-
-
-   alkjdhigjkahdlflsjbjhsfkld
