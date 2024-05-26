@@ -19,6 +19,8 @@
 int main() {
     srand((unsigned int)time(NULL));
 
+    bool isGrapped = false;
+
     while (1) {
         printf("train length(%d ~ %d)>> ", LEN_MIN, LEN_MAX);
         scanf_s("%d", &trainLen);
@@ -38,6 +40,7 @@ int main() {
     printTab();
 
     for (stage = 1; stage <= 4; stage++) {
+        turn = 0;
         initGame();
         printTrain();
         // savePrevPositions();
@@ -46,10 +49,12 @@ int main() {
         printf("Stage %d start!\n", stage);
 
         while (1) {
+            turn++;
             citizen_move();
             if (stage >= 2) villain_move();
-            zombie_move();
+            if (turn % 2 != 0 && !isGrapped) zombie_move();
 
+            printf("Current Turn: %d\n", turn);
             printTrain();
             printTab();
             printStatus();
@@ -69,13 +74,13 @@ int main() {
                 }
             }
 
-            printTrain();
-
-            printf("\n\n");
-
             if (madongseok_move() != M_GOOD) {
-                printf("madongseok stay %d (aggro: %d -> %d, stamina: %d)\n", madongseok(Pos), madongseok(AggroPrev), madongseok(Aggro), madongseokStamina);
+                printTrain();
+                printf("\n\n");
+                printf("madongseok stay %d (aggro: %d -> %d, stamina: %d -> %d)\n", madongseok(Pos), madongseok(AggroPrev), madongseok(Aggro), madongseokStaminaPrev, madongseokStamina);
             } else {
+                printTrain();
+                printf("\n\n");
                 printf("madongseok move %d -> %d");
             }
 
@@ -107,7 +112,7 @@ int main() {
             if (citizenAttacked) {
                 printf("zombie attacked citizen. \n");
             }
-            else if (train[madongseok(Pos)] == TRAIN_Z || train[madongseok(Pos)] == TRAIN_EZ) {
+            else if (train[madongseok(Pos)] == TRAIN_Z + 1 || train[madongseok(Pos)] == TRAIN_EZ + 1) {
                 printf("zombie attacked madongseok. \n");
             }
             else {
@@ -122,7 +127,8 @@ int main() {
                 scanf_s("%d", &dongseokAction);
                 if (dongseokAction >= ACTION_REST && dongseokAction <= ACTION_PULL) break;
             }
-            madonseok_action(dongseokAction);
+            printf("\n\n");
+            isGrapped = madonseok_action(dongseokAction);
 
             if (citizenNum == 0) {
                 printf("GAME OVER! All citizens are dead.\n");

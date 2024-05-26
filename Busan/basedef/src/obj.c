@@ -26,7 +26,7 @@ void obj_printMove(ptr_obj p) {
 
     switch (p->id) {
     default:
-        printf(" (aggro: %d)", p->Aggro);
+        printf(" (aggro: %d -> %d)", p->AggroPrev, p->Aggro);
     case TRAIN_Z: case TRAIN_EZ:
         printf("\n");
         break;

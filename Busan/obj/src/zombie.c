@@ -10,7 +10,7 @@
 
  Busan_errno_t zombie_moveCond(int will) {
     Busan_errno_t err;
-    if (rand() & 1) return ZOMBIE_IDLE;
+    if (rand() % 100 > p) return ZOMBIE_IDLE;
     switch (err = obj_moveCond(&zombie, will)) {
     case OBJ_GOOD: break;
     default: return err + ZOMBIE_LOCALE_OBJ;
@@ -22,7 +22,7 @@
     return ZOMBIE_GOOD;
 }
 Busan_errno_t zombie_move() {
-    const int will = madongseokAggro >= citizen_aggroSum() ? 1 : -1;
+    const int will = madongseokAggro >= citizen_aggroMax() ? 1 : -1;
     Busan_errno_t cond = zombie_moveCond(will);
     switch (cond) {
     case ZOMBIE_GOOD: {
@@ -53,12 +53,12 @@ void zombie_action() {
     case ZOMBIE_TAR_VILLAIN: {
         // zombie dunked on
         if((zombie(Pos) == madongseok(Pos) - 1 || zombie(Pos) == madongseok(Pos) + 1))
-            madongseok(Stamina)--;
+            villain_kill();
     } break;
     case ZOMBIE_TAR_M: {
         // stupid villain killed
         if ((zombie(Pos) == madongseok(Pos) - 1 || zombie(Pos) == madongseok(Pos) + 1))
-            villain_kill();
+            madongseok(Stamina)--;
     } break;
     default: {
         // zombie do shit

@@ -14,6 +14,7 @@ enum err_madongseok {
 };
 
 Busan_errno_t madongseok_move();
-void madonseok_action(int);
+int madonseok_action(int);
+void madongseok_stamina(int);
 
 #endif // !MADONGSEOK_H

@@ -5,6 +5,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 extern char train[];
+extern int turn;
 
 extern char stage;
 extern int trainLen;
@@ -22,6 +23,7 @@ extern struct obj villain;
 extern struct obj madongseok;
 
 extern int madongseokStamina;
+extern int madongseokStaminaPrev;
 extern int madongseokDirection;
 
 #define madongseokPos madongseok.Pos

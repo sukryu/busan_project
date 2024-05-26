@@ -26,25 +26,34 @@ Busan_errno_t madongseok_move() {
     }
     } return err;
 }
-void madonseok_action(int action) {
+
+void madongseok_stamina(int will) {
+    madongseokStaminaPrev = madongseokStamina;
+    madongseokStamina += will;
+}
+
+int madonseok_action(int action) {
     switch (action) {
     case ACTION_REST:
         madongseok(Stamina) += madongseok(Stamina) < STM_MAX;
         obj_aggro(&madongseok, -(madongseok(Aggro) > AGGRO_MIN));
-        printf("madongseok rests...\n");
-        printf("madongseok: %d (aggro: %d -> %d, stamina: %d -> \n)",
-            madongseok(Pos), madongseok(AggroPrev), madongseok(Aggro), madongseokStamina);
+        printf("madongseok rests...\n\n");
+        printf("madongseok: %d (aggro: %d -> %d, stamina: %d -> %d\n)",
+            madongseok(Pos), madongseok(AggroPrev), madongseok(Aggro), madongseokStaminaPrev, madongseokStamina);
         break;
     case ACTION_PROVOKE:
         madongseok(Stamina) = AGGRO_MAX;
-        printf("madongseok provoked zombie...\n");
+        printf("madongseok provoked zombie...\n\n");
+        printf("madongseok: %d (aggro: %d -> %d, stamina: %d -> %d\n)",
+            madongseok(Pos), madongseok(AggroPrev), madongseok(Aggro), madongseokStaminaPrev, madongseokStamina);
         break;
     case ACTION_PULL:
         if (zombie(Pos) == madongseok(Pos) - 1) {
             obj_aggro(&madongseok, (madongseok(Aggro) + 2 <= AGGRO_MAX) << 1);
             madongseok(Stamina) -= madongseok(Stamina) > STM_MIN;
-            if (rand() % 100 >= p) zombie(Pos) = -1;
+            return (rand() % 100 >= p);
         }
     default: break;
     }
+    return 0;
 }
