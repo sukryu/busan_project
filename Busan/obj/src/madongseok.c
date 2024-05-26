@@ -51,7 +51,8 @@ int madonseok_action(int action) {
         if (zombie(Pos) == madongseok(Pos) - 1) {
             obj_aggro(&madongseok, (madongseok(Aggro) + 2 <= AGGRO_MAX) << 1);
             madongseok(Stamina) -= madongseok(Stamina) > STM_MIN;
-            return (rand() % 100 >= p);
+            int isSuccess = (rand() % 100 >= p);
+            if (isSuccess) 
         }
     default: break;
     }
