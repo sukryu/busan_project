@@ -25,7 +25,8 @@ int main() {
         printf("train length(%d ~ %d)>> ", LEN_MIN, LEN_MAX);
         scanf_s("%d", &trainLen);
         if (trainLen >= LEN_MIN && trainLen <= LEN_MAX) break;
-    } train[trainLen] = 0;
+    }
+    train[trainLen] = 0;
     while (1) {
         printf("madonseok stamina(%d ~ %d)>> ", STM_MIN, STM_MAX);
         scanf_s("%d", &madongseok(Stamina));
@@ -43,7 +44,6 @@ int main() {
         turn = 0;
         initGame();
         printTrain();
-        // savePrevPositions();
         printTab();
 
         printf("Stage %d start!\n", stage);
@@ -52,7 +52,7 @@ int main() {
             turn++;
             citizen_move();
             if (stage >= 2) villain_move();
-            if (turn % 2 != 0 && !isGrapped) zombie_move();
+            if (turn % 2 != 0 && !isGrapped) zombie_move(turn);
 
             printf("Current Turn: %d\n", turn);
             printTrain();
@@ -61,7 +61,6 @@ int main() {
             printTab();
 
             while (1) {
-
                 if ((madongseok(Pos) - 1) == zombie(Pos)) {
                     printf("madonseok move(0:stay)>> ");
                     scanf_s("%d", &madongseokDirection);
@@ -81,7 +80,7 @@ int main() {
             } else {
                 printTrain();
                 printf("\n\n");
-                printf("madongseok move %d -> %d");
+                printf("madongseok move %d -> %d\n", madongseok(PosPrev), madongseok(Pos));
             }
 
             citizen_action();
@@ -101,19 +100,19 @@ int main() {
 
             zombie_action();
 
-            bool citizenAttacked = 0;
+            bool citizenAttacked = false;
             for (int i = 0; i < citizenNum; i++) {
                 if (train[citizen(Pos, i)] == TRAIN_Z || train[citizen(Pos, i)] == TRAIN_EZ) {
-                    citizenAttacked = 1;
+                    citizenAttacked = true;
                     break;
                 }
             }
 
             if (citizenAttacked) {
-                printf("zombie attacked citizen. \n");
+                printf("zombie attacked citizen.\n");
             }
             else if (train[madongseok(Pos)] == TRAIN_Z + 1 || train[madongseok(Pos)] == TRAIN_EZ + 1) {
-                printf("zombie attacked madongseok. \n");
+                printf("zombie attacked madongseok.\n");
             }
             else {
                 printf("zombie attacked nobody.\n");
@@ -141,11 +140,11 @@ int main() {
                     allEscaped = 0;
                     break;
                 }
-            }   
+            }
             if (allEscaped) break;
 
             if (madongseok(Stamina) <= 0) {
-                printf("GAME OVER! Madongseok is exhausted. \n");
+                printf("GAME OVER! Madongseok is exhausted.\n");
                 return 0;
             }
         }

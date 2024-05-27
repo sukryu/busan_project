@@ -1,5 +1,6 @@
 {
   "files.associations": {
-    "madongseok.h": "c"
+    "madongseok.h": "c",
+    "train.h": "c"
   }
 }

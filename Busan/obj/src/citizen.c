@@ -38,13 +38,17 @@ int citizen_aggroSum() {
     return rtn / citizenNum;
 }
 int citizen_aggroMax() {
-    int rtn = 0;
+    int maxAggro = citizen(Aggro, 0);
+    int maxIdx = 0;
 
-    for (int i = 1; i < citizenNum; i++)
-        if (citizen(Aggro, i) > citizen(Aggro, rtn))
-            rtn = i;
+    for (int i = 1; i < citizenNum; i++) {
+        if (citizen(Aggro, i) > maxAggro) {
+            maxAggro = citizen(Aggro, i);
+            maxIdx = i;
+        }
+    }
 
-    return rtn;
+    return maxIdx;
 }
 int _citizenKilled(int off) {
     static int rtn = 0;

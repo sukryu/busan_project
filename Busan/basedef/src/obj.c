@@ -10,11 +10,11 @@
 
 void obj_printMove(ptr_obj p) {
     switch (p->id) {
-    case TRAIN_C: printf("c"); break;
-    case TRAIN_EZ: printf("ez"); break;
-    case TRAIN_M: printf("m"); break;
-    case TRAIN_V: printf("v"); break;
-    case TRAIN_Z: printf("z"); break;
+    case TRAIN_C: printf("C"); break;
+    case TRAIN_EZ: printf("Z"); break;
+    case TRAIN_M: printf("M"); break;
+    case TRAIN_V: printf("V"); break;
+    case TRAIN_Z: printf("Z"); break;
     } printf(": ");
 
     if (p->PosPrev != p->Pos) {
@@ -35,26 +35,36 @@ void obj_printMove(ptr_obj p) {
 
 Busan_errno_t obj_moveCond(ptr_obj p, char will) {
     if (p->Pos + will >= trainLen || p->Pos + will < 0) {
+        printf("Move out of range: %d -> %d\n", p->Pos, p->Pos + will);
         return OBJ_OUT_OF_RANGE;
     }
 
     switch (train[p->Pos + will]) {
     case TRAIN_0: break;
-    default: return OBJ_BLOCKED;
+    default: 
+        printf("Move blocked by object at %d\n", p->Pos + will);
+        return OBJ_BLOCKED;
     }
 
     return OBJ_GOOD;
 }
+
 Busan_errno_t obj_move(ptr_obj p, int will) {
     Busan_errno_t err = obj_moveCond(p, will);
 
     switch (err) {
     case OBJ_GOOD:
+        printf("Object moving from %d to %d\n", p->Pos, p->Pos + will);
         train[p->PosPrev = p->Pos] = TRAIN_0;
         train[p->Pos += will] = p->id;
-    default: break;
-    } return err;
+        break;
+    default: 
+        printf("Object move failed with error: %d\n", err);
+        break;
+    }
+    return err;
 }
+
 
 void obj_aggro(ptr_obj p, int will) {
     p->AggroPrev = p->Aggro;
