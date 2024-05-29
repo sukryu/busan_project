@@ -73,13 +73,11 @@ int move_C(int C_pos, int p) {
 
 int move_Z(int p, int Z_pos ,int C_pos, int M_pos, int C_Aggro, int M_Aggro) {
     int random_num = rand() % 100;
-    if (random_num > (100 - p)) {
-        if (Z_pos > 1 && C_Aggro > M_Aggro) {
-            if (Z_pos - 1 != C_pos) Z_pos--;
-        } else if (Z_pos > 1 && C_Aggro < M_Aggro) {
-            if (Z_pos + 1 != M_pos) Z_pos++;
-        } else if (Z_pos > 1 && C_Aggro == M_Aggro) {
-            if (Z_pos - 1 != C_pos) Z_pos--;
+    if (random_num < p) {
+        if (Z_pos > 1 && C_Aggro >= M_Aggro && Z_pos - 1 != C_pos) {
+            Z_pos--;
+        } else if (Z_pos > 1 && C_Aggro < M_Aggro && Z_pos + 1 != M_pos) {
+            Z_pos++;
         }
     }
     return Z_pos;
@@ -88,11 +86,15 @@ int move_Z(int p, int Z_pos ,int C_pos, int M_pos, int C_Aggro, int M_Aggro) {
 int move_M(int M_pos, int Z_pos) {
     if (M_pos != Z_pos + 1) {
         M_pos--;
-    } else {
-        M_pos;
     }
     return M_pos;
 }
+
+void madongseok_stay(int *stamina, int *aggro) {
+    if (*stamina < STM_MAX) (*stamina)++;
+    if (*aggro > AGGRO_MIN) (*aggro)--;
+}
+
 
 int set_zombie_target(int Z_pos, int prev_Z_pos, int target) {
     if (Z_pos + 1 == prev_Z_pos) {
@@ -104,6 +106,34 @@ int set_zombie_target(int Z_pos, int prev_Z_pos, int target) {
     }
     return target;
 }
+
+void perform_action(int action, int *aggro, int *stamina, int *isPulled, int p) {
+    int random_num = rand() % 100;
+    switch(action) {
+        case ACTION_REST:
+            printf("madongseok rest...\n");
+            *aggro = (*aggro - 1 <= AGGRO_MIN) ? AGGRO_MIN : *aggro - 1;
+            *stamina = (*stamina + 1 >= STM_MAX) ? STM_MAX : *stamina + 1;
+            break;
+        case ACTION_PROVOKE:
+            printf("madongseok provoked zombie...\n");
+            *aggro = AGGRO_MAX;
+            break;
+        case ACTION_PULL:
+            if (random_num < (100 - p)) {
+                printf("madongseok pulled zombie... Next turn, it can't move\n");
+                *aggro = (*aggro + 2 >= AGGRO_MAX) ? AGGRO_MAX : *aggro + 2;
+                *stamina -= 1;
+                *isPulled = true;
+            } else {
+                printf("madongseok failed to pull zombie...\n");
+                *aggro = (*aggro + 2 >= AGGRO_MAX) ? AGGRO_MAX : *aggro + 2;
+                *stamina -= 1;
+            }
+            break;
+    }
+}
+
 
 int main() {
     srand((unsigned int)time(NULL));
@@ -186,7 +216,6 @@ int main() {
             }
         }
         printf("\n");
-        // 마동석 이동 입력받기.
         int input_move_madongseok = 0;
         bool moved = false;
         while(1) {
@@ -196,8 +225,7 @@ int main() {
                 if (input_move_madongseok >= MOVE_STAY && input_move_madongseok <= MOVE_LEFT) {
                     switch(input_move_madongseok) {
                         case MOVE_STAY:
-                            if (checkIsValidStaminaRange(madongseok_stamina)) madongseok_stamina++;
-                            if (checkIsValidAggroRange(M_Aggro))M_Aggro--;
+                            madongseok_stay(&madongseok_stamina, &M_Aggro);
                             break;
                         case MOVE_LEFT:
                             M_pos = move_M(M_pos, Z_pos);
@@ -210,8 +238,7 @@ int main() {
                 printf("madongseok move(0:stay)>> ");
                 scanf("%d", &input_move_madongseok);
                 if (input_move_madongseok == MOVE_STAY) {
-                    if (checkIsValidStaminaRange(madongseok_stamina))madongseok_stamina++;
-                    if (checkIsValidAggroRange(M_Aggro))M_Aggro--;
+                    madongseok_stay(&madongseok_stamina, &M_Aggro);
                     break;
                 }
             }
@@ -260,7 +287,7 @@ int main() {
             printf("zombie attacked nobody.\n");
         }
         // 시민, 좀비 행동 로그 출력.
-        // 마동석 행동 입력.
+        // 마동석 행동 입력 및 처리
         int input_action = ACTION_REST;
         while (1) {
             if (Z_pos + 1 == M_pos) {
@@ -268,41 +295,12 @@ int main() {
                 scanf("%d", &input_action);
                 if (input_action >= ACTION_REST && input_action <= ACTION_PULL) break;
             } else {
-                printf("maddongseok action(0.rest, 1.provoke)>> ");
+                printf("madongseok action(0.rest, 1.provoke)>> ");
                 scanf("%d", &input_action);
                 if (input_action >= ACTION_REST && input_action <= ACTION_PROVOKE) break;
             }
         }
-        int random_num = rand() % 100;
-        // 마동석 행동 로그 출력.
-        switch(input_action) {
-            case ACTION_REST:
-                printf("madongseok rest...\n");
-                M_Aggro = (M_Aggro - 1 <= AGGRO_MIN) ? AGGRO_MIN : M_Aggro - 1;
-                madongseok_stamina = (madongseok_stamina + 1 >= STM_MAX) ? STM_MAX : madongseok_stamina + 1;
-                printf("madongseok: %d (aggro: %d, stamina: %d)\n", M_pos, M_Aggro, madongseok_stamina);
-                break;
-            case ACTION_PROVOKE:
-                printf("madongseok provoked zombie...\n");
-                M_Aggro = AGGRO_MAX;
-                printf("madongseok: %d (aggro: %d, stamina: %d)\n", M_pos, M_Aggro, madongseok_stamina);
-                break;
-            case ACTION_PULL:
-                if (random_num < (100 - p)) {
-                    printf("madongseok pulled zombie... Next turn, it can`t move\n");
-                    M_Aggro = (M_Aggro + 2 >= AGGRO_MAX) ? AGGRO_MAX : M_Aggro + 2;
-                    madongseok_stamina -= 1;
-                    isPulled = true;
-                    printf("madongseok: %d (aggro: %d -> %d, stamina: %d)\n", M_pos, prev_M_Aggro, M_Aggro, madongseok_stamina);
-                    break;
-                } else {
-                    printf("madongseok failed to pull zombie...\n");
-                    M_Aggro = (M_Aggro + 2 >= AGGRO_MAX) ? AGGRO_MAX : M_Aggro + 2;
-                    madongseok_stamina -= 1;
-                    printf("madongseok: %d (aggro: %d -> %d, stamina: %d)\n", M_pos, prev_M_Aggro, M_Aggro, madongseok_stamina);
-                    break;
-                }
-        }
+        perform_action(input_action, &M_Aggro, &madongseok_stamina, &isPulled, p);
         if (madongseok_stamina <= 0) {
             printf("GAME OVER! madongseok died.");
             exit(0);
