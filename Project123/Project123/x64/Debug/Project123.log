@@ -1,0 +1,3 @@
+﻿  main.c
+C:\Users\USER\OneDrive\바탕 화면\busan.project,final\Project123\Project123\main.c(328,69): warning C4133: '함수': 'bool *'과(와) 'int *' 사이의 형식이 호환되지 않습니다.
+  Project123.vcxproj -> C:\Users\USER\OneDrive\바탕 화면\busan.project,final\Project123\x64\Debug\Project123.exe
